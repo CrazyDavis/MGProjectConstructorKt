@@ -1,0 +1,1 @@
+include ':app', ':mg-project-constructor-kt'

@@ -24,7 +24,7 @@ typealias MGPageData = Pair<MGUrlRequest?, MGPageInfo>
 
 class MGFgtManager: MGRequestConnect.MGRequestCallback {
 
-    lateinit private var manager: FragmentManager
+    private lateinit var manager: FragmentManager
 
     //最基本的fgt跳轉, 每次將歷史紀錄清除後都需要回到地俗稱首頁的頁面
     private var rootPage: MGPageData? = null
@@ -35,10 +35,8 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
     //針對每種類型頁面的 history, key 為頁面類型, value 為 MGPageData
     var pageHistory: MutableMap<Int, MutableList<MGPageData>> = mutableMapOf()
 
-
     //跳轉時的相關回調
     var delegate: TurnDelegate? = null
-
 
     //儲存 某個 layout 裡面裝載的最上層 fgt
     //不一定是顯示狀態, 但一定是最上層
@@ -63,7 +61,6 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
         if (rootPage != null) pageJump(rootPage!!)
     }
 
-
     //回傳最上方的page是否處理back的動作
     fun backAction(): Boolean {
         //先檢查是否擁有頁面可以檢查是否處理
@@ -78,14 +75,12 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
         }
     }
 
-
     //回上一個 fgt, 參數回到退多少頁
     //回傳可否回上一頁, 例如: 如果當頁已經是首頁, 即無法回上頁
     fun backPage(back: Int = 1): Boolean {
 
         //先檢查是否擁有頁面可以跳轉
         if (totalHistory.size == 0) return false
-
 
         var pageData: MGPageData? = null
 
@@ -160,15 +155,12 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
         }
     }
 
-
 //    //直接隱藏某個container, 檢查裡面是否擁有fgt存在, 有直接隱藏
 //    fun hideContainer(@LayoutRes container: Int) {
 //        page
 //    }
 
-
     /*****************************外部接口 以上**********************************/
-
 
     /**
      * 功能: 跳轉頁面
@@ -221,7 +213,6 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
                 (0 until totalHistory.size)
                         .filter { totalHistory[it].second.pageTag == data.second.pageTag }
                         .forEach { totalHistory.removeAt(it) }
-
             }
 
             if (pageInfo.inHistory && pageInfo.pageTag != rootPage?.second?.pageTag) {
@@ -257,10 +248,9 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
                     pageHistory[pageInfo.containerId] = mutableListOf(data)
                 }
             }
-
         }
 
-        containerMap.put(data.second.containerId, fgt!!)
+        containerMap[data.second.containerId] = fgt!!
 
         //頁面以跳轉, 回調
         delegate?.fgtChange(data)
@@ -306,9 +296,8 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
         return fgt
     }
 
-
     //封裝 FGT 交易跳轉, 以 lambda 的方式編寫 fgt 的每次交易
-    inline fun FragmentManager.inTransaction(func: FragmentTransaction.() -> Unit) {
+    private inline fun FragmentManager.inTransaction(func: FragmentTransaction.() -> Unit) {
         val fragmentTransaction = beginTransaction()
         fragmentTransaction.func()
         fragmentTransaction.commit()
@@ -318,7 +307,7 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
      * 跳轉頁面的 request 回調
      * */
     override fun response(request: MGUrlRequest, requestCode: Int, success: Boolean) {
-        if (delegate?.jumpResponse(request, requestCode, success) ?: false) return
+        if (delegate?.jumpResponse(request, requestCode, success) == true) return
 
         if (success) {
             pageJump(MGPageData(request, request.pageInfo!!))
@@ -327,10 +316,8 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
         }
     }
 
-
     //跳轉頁面相關回調
     interface TurnDelegate {
-
         //跳轉頁面回調
         fun fgtChange(pageData: MGPageData)
 

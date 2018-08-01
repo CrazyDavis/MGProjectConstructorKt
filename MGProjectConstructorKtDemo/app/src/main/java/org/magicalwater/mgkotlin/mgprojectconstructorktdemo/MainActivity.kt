@@ -1,18 +1,14 @@
 package org.magicalwater.mgkotlin.mgprojectconstructorktdemo
 
 import android.Manifest
-import android.support.v7.app.AppCompatActivity
-import android.os.Bundle
 import kotlinx.android.synthetic.main.activity_main.*
 import org.magicalwater.mgkotlin.mgprojectconstructorkt.connect.MGUrlRequest
 import org.magicalwater.mgkotlin.mgprojectconstructorkt.manager.MGCodeScanManager
-import org.magicalwater.mgkotlin.mgprojectconstructorkt.ui.MGBaseAty
-import org.magicalwater.mgkotlin.mgprojectconstructorktdemo.R
-import org.magicalwater.mgkotlin.mgutilskt.util.MGLogUtils
+import org.magicalwater.mgkotlin.mgprojectconstructorkt.ui.MGBase3Aty
 import org.magicalwater.mgkotlin.mgutilskt.util.MGPermissionUtils
 import org.magicalwater.mgkotlin.mgutilskt.util.MGSettingUtils
 
-class MainActivity : MGBaseAty() {
+class MainActivity : MGBase3Aty() {
 
     val mCodeScanManager: MGCodeScanManager by lazy {
         MGCodeScanManager(mCodeScanLayout)

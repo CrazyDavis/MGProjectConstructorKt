@@ -37,12 +37,10 @@ class MGBaseApiHelper(delegate: MGApiHelperDelegate) : MGRequestSenderDelegate {
         delegate.response(request, success, requestCode)
     }
 
-
     //讓子類呼叫
     fun sendRequest(request: MGUrlRequest, requestCode: Int = MGRequestSender.REQUEST_DEFAUT) {
         requestSender.send(request, requestCode)
     }
-
 
     fun timerAction(action: TimerAction, time: Long = timerTime) {
         when (action) {
@@ -59,7 +57,7 @@ class MGBaseApiHelper(delegate: MGApiHelperDelegate) : MGRequestSenderDelegate {
     }
 
     //倒數計時到了
-    fun timesUp() = delegate.timesUp()
+    private fun timesUp() = delegate.timesUp()
 }
 
 interface MGApiHelperDelegate {

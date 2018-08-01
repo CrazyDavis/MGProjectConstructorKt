@@ -12,9 +12,10 @@ import org.magicalwater.mgkotlin.mgprojectconstructorkt.fgtHelper.MGFgtDataHelpe
  * Created by 志朋 on 2017/12/3.
  * 最基本的上層 Fgt
  */
-open abstract class MGBaseFgt: Fragment(), MGFgtDataHelper, MGApiHelperDelegate {
+abstract class MGBaseFgt: Fragment(), MGFgtDataHelper, MGBaseFgtHelperFeature, MGBaseApiHelperFeature {
 
-    private var apiHelper: MGBaseApiHelper? = null
+    override var mApiHelper: MGBaseApiHelper? = null
+    override var mFgtHelper: MGBaseFgtHelper? = null
 
     final override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater?.inflate(contentLayout(), container, false)
@@ -23,16 +24,9 @@ open abstract class MGBaseFgt: Fragment(), MGFgtDataHelper, MGApiHelperDelegate 
     final override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         settingApiHelper()
+        settingFgtManager()
         setupView()
     }
-
-    //抓取是否啟用 api 輔助物件的工具
-    protected fun settingApiHelper() {
-        apiHelper = if (enableApiHelper()) MGBaseApiHelper(this) else null
-    }
-
-    //是否啟用 api 輔助 class
-    protected fun enableApiHelper(): Boolean = true
 
     abstract fun setupView()
 
@@ -43,21 +37,5 @@ open abstract class MGBaseFgt: Fragment(), MGFgtDataHelper, MGApiHelperDelegate 
      * @param isFgtInit   此頁面是否正要初始化, 或者頁面已經存在只是傳入資料
      * */
 //    override fun pageData(data: MGPageData, isFgtInit: Boolean)
-
-    //子類別設定倒數計時狀態
-    protected fun timerAction(action: MGBaseApiHelper.TimerAction) {
-        apiHelper?.timerAction(action)
-    }
-
-    //設定倒數計時預設時間
-    protected fun setTimerTime(time: Long) {
-        apiHelper?.timerTime = time
-    }
-
-    //發送MGUrlRequest
-    protected fun sendRequest(request: MGUrlRequest, requestCode: Int? = null) {
-        if (requestCode != null) apiHelper?.sendRequest(request, requestCode)
-        else apiHelper?.sendRequest(request)
-    }
 
 }

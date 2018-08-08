@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <FrameLayout
+    <Button
+        android:layout_width="100dp"
+        android:layout_height="40dp"
+        android:text="按鈕, 請按下他"
+        android:onClick="onClick"/>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/mCodeScanLayout"/>
+        android:background="#ffcc88"
+        android:orientation="vertical"
+        android:id="@+id/mContainer"/>
 
-</android.support.constraint.ConstraintLayout>
+</FrameLayout>

@@ -48,7 +48,9 @@ class MGBaseFgtHelper {
         }
     }
 
-    //跳轉到某個 Fragment, vm ru/ eji4jp;3xj4
+    fun removeAllPage() {
+        fgtManager.removeAllFragment()
+    }
 
     fun show(request: MGUrlRequest) {
         fgtManager.pageJump(request)

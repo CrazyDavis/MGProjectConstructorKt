@@ -15,6 +15,8 @@ interface MGBaseFgtHelperFeature {
 
     //抓取是否啟用 api 輔助物件的工具
     fun settingFgtManager() {
+        //重新設定FgtManager需要先清除原先存在的page(假如有的話)
+        removeAllPage()
         val manager = fragmentManager()
         if (manager != null) {
             mFgtHelper = if (enableFgtManager()) MGBaseFgtHelper() else null
@@ -55,6 +57,11 @@ interface MGBaseFgtHelperFeature {
 
     fun toRootPage() {
         mFgtHelper?.toRootPage()
+    }
+
+    //清除所有畫面
+    fun removeAllPage() {
+        mFgtHelper?.removeAllPage()
     }
 
     //回退上一頁fragment, 回傳代表是否處理 back

@@ -96,7 +96,6 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
         //因為是退回上一頁, 所以我們要拿上一頁的資料進行跳轉
         //因此當回退一頁的時候, 就要刪除兩頁
         for (i in 0..back) {
-
             if (isNeedToRoot()) return true
 
             pageData = totalHistory.removeLast()
@@ -113,6 +112,18 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
 
         pageJump(pageData!!)
         return true
+    }
+
+    //清除所有的fragment, 通常會在此類別重新創建時使用
+    fun removeAllFragment() {
+        manager.inTransaction {
+            manager.fragments.forEach {
+                remove(it)
+            }
+        }
+        totalHistory.clear()
+        pageHistory.clear()
+        containerMap.clear()
     }
 
     //需經過網路要求資料, 再跳頁面
@@ -185,13 +196,11 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
         //      - 是 -> 將 data 傳入, 不做其餘動作
         //      - 否 -> 初始化 fgt 並替換
         //無 -> 直接 add fgt
-
         var fgt: Fragment? = getFgt(pageInfo.pageTag)
 
         if (fgt != null) {
-            //fgt 已存在, 直接將 pageData 傳入
-            replaceFgt(fgt, pageInfo.containerId, pageInfo.pageTag)
-            putPageDataIfNeed(fgt, data, false)
+            //fgt 已存在
+            replaceFgt(fgt, pageInfo.containerId, pageInfo.pageTag, data)
 
             //檢查設定, 若為節點則清除以前的歷史紀錄
             //若不加入歷史紀錄則不加入
@@ -215,22 +224,12 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
                         .forEach { totalHistory.removeAt(it) }
             }
 
-            if (pageInfo.inHistory && pageInfo.pageTag != rootPage?.second?.pageTag) {
-                if (pageHistory.containsKey(pageInfo.containerId)) {
-                    pageHistory[pageInfo.containerId]?.add(data)
-                } else {
-                    pageHistory[pageInfo.containerId] = mutableListOf(data)
-                }
-                totalHistory.add(data)
-            }
-
         } else {
             //直接生產fgt置換顯示
             fgt = MGFgtUtils.getFgt(manager, pageInfo.pageTag, pageInfo.page)
-            putPageDataIfNeed(fgt!!, data, true)
 
             //開始置換 fgt 顯示
-            replaceFgt(fgt!!, pageInfo.containerId, pageInfo.pageTag)
+            replaceFgt(fgt!!, pageInfo.containerId, pageInfo.pageTag, data)
 
             //檢查設定, 若為節點則清除以前的歷史紀錄
             //若不加入歷史紀錄則不加入
@@ -239,14 +238,15 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
                 pageHistory.clear()
             }
 
-            //是否將本次頁面跳轉寫入歷史
-            if (pageInfo.inHistory && pageInfo.pageTag != rootPage?.second?.pageTag) {
-                totalHistory.add(data)
-                if (pageHistory.containsKey(pageInfo.containerId)) {
-                    pageHistory[pageInfo.containerId]?.add(data)
-                } else {
-                    pageHistory[pageInfo.containerId] = mutableListOf(data)
-                }
+        }
+
+        //是否將本次頁面跳轉寫入歷史
+        if (pageInfo.inHistory && pageInfo.pageTag != rootPage?.second?.pageTag) {
+            totalHistory.add(data)
+            if (pageHistory.containsKey(pageInfo.containerId)) {
+                pageHistory[pageInfo.containerId]?.add(data)
+            } else {
+                pageHistory[pageInfo.containerId] = mutableListOf(data)
             }
         }
 
@@ -264,8 +264,9 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
         }
     }
 
-    //置換 fgt 顯示
-    private fun replaceFgt(fgt: Fragment, layoutId: Int, tag: String) {
+    //置換 fgt 顯示, 回傳顯示的fgt是否初次初始化加入
+    private fun replaceFgt(fgt: Fragment, layoutId: Int, tag: String, data: MGPageData): Boolean {
+        var isInit = false
         manager.inTransaction {
 
             setCustomAnimations(
@@ -274,9 +275,9 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
             )
 
             //先檢查是否有原存在的 fgt 顯示當中
-            //若有則隱藏
+            //若有則隱藏, 當然也要檢查是否為同一個fgt
             val sourceFgt = containerMap[layoutId]
-            if (sourceFgt != null && !sourceFgt.isHidden) {
+            if (sourceFgt != null && !sourceFgt.isHidden && sourceFgt != fgt) {
 
                 //假如要被隱藏的fgt有繼承 MGFgtStatusHelper 監聽狀態
                 //則傳入即將關閉的訊息
@@ -284,16 +285,23 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
                 hide(sourceFgt)
             }
 
-            if (fgt.isAdded) show(fgt)
-            else add(layoutId, fgt, tag)
+            val isFgtAdded = fgt.isAdded
 
+            //在最後決定置換/顯示fgt之前, 將fgt需要的資料傳入
+            putPageDataIfNeed(fgt!!, data, !isFgtAdded)
+
+            if (isFgtAdded) {
+                if (fgt.isHidden) show(fgt)
+            } else {
+                add(layoutId, fgt, tag)
+            }
         }
+        return isInit
     }
 
     //得到 某個 tag 對應的 fgt, 只有當其正在顯示當中才會回傳
     private fun getFgt(tag: String): Fragment? {
-        val fgt = MGFgtUtils.getNowShowFgt(manager, tag)
-        return fgt
+        return MGFgtUtils.getNowShowFgt(manager, tag)
     }
 
     //封裝 FGT 交易跳轉, 以 lambda 的方式編寫 fgt 的每次交易

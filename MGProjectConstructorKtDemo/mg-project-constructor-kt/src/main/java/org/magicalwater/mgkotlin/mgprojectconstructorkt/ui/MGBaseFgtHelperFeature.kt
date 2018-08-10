@@ -19,8 +19,10 @@ interface MGBaseFgtHelperFeature {
         removeAllPage()
         val manager = fragmentManager()
         if (manager != null) {
+            //設定之前同樣清除所有歷史
             mFgtHelper = if (enableFgtManager()) MGBaseFgtHelper() else null
             mFgtHelper?.setFragmentManager(manager)
+            removeAllPage()
         } else {
             mFgtHelper = null
         }

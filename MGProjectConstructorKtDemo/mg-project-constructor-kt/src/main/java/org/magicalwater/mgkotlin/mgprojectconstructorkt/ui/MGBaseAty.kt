@@ -37,6 +37,8 @@ abstract class MGBaseAty: AppCompatActivity(), MGBaseApiHelperFeature, MGBaseFgt
     //幫助判斷是否為第一次進入此頁面(作為判斷是否呼叫 activityToForeground 的依據)
     private var mIsActivtyFirstInside: Boolean = true
 
+//    private var mIsOnCreate = false
+
     final override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(contentLayout())

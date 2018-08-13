@@ -116,11 +116,17 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
 
     //清除所有的fragment, 通常會在此類別重新創建時使用
     fun removeAllFragment() {
-        manager.inTransaction {
+        //刪除所有的fragment
+        manager.inTransaction(false) {
             manager.fragments.forEach {
                 remove(it)
             }
         }
+
+        //正確刪除方法要在remove之後做此動作
+        //彈出所有正在顯示的fragment
+        manager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+
         totalHistory.clear()
         pageHistory.clear()
         containerMap.clear()
@@ -286,10 +292,12 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
             }
 
             val isFgtAdded = fgt.isAdded
+            println("即將置入的 fgt 依附頁面: ${fgt.activity}")
 
             //在最後決定置換/顯示fgt之前, 將fgt需要的資料傳入
             putPageDataIfNeed(fgt!!, data, !isFgtAdded)
 
+//            add(layoutId, fgt, tag)
             if (isFgtAdded) {
                 if (fgt.isHidden) show(fgt)
             } else {
@@ -304,11 +312,19 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
         return MGFgtUtils.getNowShowFgt(manager, tag)
     }
 
-    //封裝 FGT 交易跳轉, 以 lambda 的方式編寫 fgt 的每次交易
-    private inline fun FragmentManager.inTransaction(func: FragmentTransaction.() -> Unit) {
+    /**
+     * 封裝 FGT 交易跳轉, 以 lambda 的方式編寫 fgt 的每次交易
+     * @param async - 是否異步提交
+     * @param func - 區塊回調
+     * */
+    private inline fun FragmentManager.inTransaction(async: Boolean = true, func: FragmentTransaction.() -> Unit) {
         val fragmentTransaction = beginTransaction()
         fragmentTransaction.func()
-        fragmentTransaction.commit()
+        if (async) {
+            fragmentTransaction.commit()
+        } else {
+            fragmentTransaction.commitNow()
+        }
     }
 
     /**

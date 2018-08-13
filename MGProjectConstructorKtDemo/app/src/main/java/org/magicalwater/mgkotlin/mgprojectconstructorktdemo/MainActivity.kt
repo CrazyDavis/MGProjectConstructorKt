@@ -10,6 +10,7 @@ import org.magicalwater.mgkotlin.mgprojectconstructorkt.manager.MGCodeScanManage
 import org.magicalwater.mgkotlin.mgprojectconstructorkt.ui.MGBaseAty
 import org.magicalwater.mgkotlin.mgutilskt.util.MGPermissionUtils
 import org.magicalwater.mgkotlin.mgutilskt.util.MGSettingUtils
+import org.magicalwater.mgkotlin.mgutilskt.util.MGTimerUtils
 
 class MainActivity : MGBaseAty() {
 
@@ -18,7 +19,15 @@ class MainActivity : MGBaseAty() {
     override fun fragmentManager(): FragmentManager? = supportFragmentManager
 
     override fun setupView() {
+        println("按下按鈕")
+        val pi = PageBuilder.buildHome()
+        fgtShow(pi)
 
+        MGTimerUtils.countDown(3000) {
+            settingFgtManager()
+            val pi = PageBuilder.buildHome()
+            fgtShow(pi)
+        }.start()
     }
 
     override fun contentLayout(): Int = R.layout.activity_main
@@ -27,9 +36,6 @@ class MainActivity : MGBaseAty() {
     override fun timesUp() {}
 
     fun onClick(view: View) {
-        println("按下按鈕")
-        val pi = PageBuilder.buildHome()
-        fgtShow(pi)
     }
 
 }

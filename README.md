@@ -1,7 +1,6 @@
 # MGProjectConstructorKt
 [ ![Download](https://api.bintray.com/packages/water/mgbase/mg-project-constructor-kt/images/download.svg) ](https://bintray.com/water/mgbase/mg-project-constructor-kt/_latestVersion) 
-![](https://img.shields.io/badge/platform--lightgrey.svg) 
-![](https://img.shields.io/badge/language-swift-orange.svg)  
+![](https://img.shields.io/badge/language-kotlin-orange.svg)  
 
 一個Android APP專案的基底
 

@@ -6,12 +6,12 @@
 
 包含以下功能的封裝:  
 1. 動畫位移相關layout  
-2 api request 單獨拉出, 供自訂widget, 不屬於 aty 與 fgt 的地方使用  
-3 fragment跳轉 單獨拉出, 供fragment內部有子freagment跳轉使用  
-4 activity 跟 fragment 的基底已經封裝好了 api request 跟 fragment跳轉  
-5 qrcode 掃描view的封裝(MGZbarView: 接入bga-qrcode-zbar)  
-6 圖片選擇器調用封裝(MGPhotoPickerHelper)  
-7 多國語系(MGLocalManager)  
+2. api request 單獨拉出, 供自訂widget, 不屬於 aty 與 fgt 的地方使用  
+3. fragment跳轉 單獨拉出, 供fragment內部有子freagment跳轉使用  
+4. activity 跟 fragment 的基底已經封裝好了 api request 跟 fragment跳轉  
+5. qrcode 掃描view的封裝(MGZbarView: 接入bga-qrcode-zbar)  
+6. 圖片選擇器調用封裝(MGPhotoPickerHelper)  
+7. 多國語系(MGLocalManager)  
 
 版本更迭:  
 0.1.6 - 修復app縮小太久導致頁面被銷毀重新進入 activity 的 onCreate 方法時, 重新設置fragmentManager造成的頁面初始化資訊錯誤

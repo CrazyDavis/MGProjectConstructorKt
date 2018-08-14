@@ -1,5 +1,5 @@
 # MGProjectConstructorKt
-[ ![Download](https://api.bintray.com/packages/water/mgbase/mg-project-constructor-kt/images/download.svg) ](https://bintray.com/water/mgbase/mg-project-constructor-kt/_latestVersion)  
+[ ![Download](https://api.bintray.com/packages/water/mgbase/mg-project-constructor-kt/images/download.svg) ](https://bintray.com/water/mgbase/mg-project-constructor-kt/_latestVersion) 
 ![](https://img.shields.io/badge/platform--lightgrey.svg) 
 ![](https://img.shields.io/badge/language-swift-orange.svg)  
 

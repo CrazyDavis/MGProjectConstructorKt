@@ -13,7 +13,7 @@
 6. 圖片選擇器調用封裝(MGPhotoPickerHelper)  
 7. 多國語系(MGLocalManager)  
 
-## 版本:  
+## 版本  
 0.1.6 - 修復app縮小太久導致頁面被銷毀重新進入 activity 的 onCreate 方法時, 重新設置fragmentManager造成的頁面初始化資訊錯誤  
 
 ## 添加依賴  

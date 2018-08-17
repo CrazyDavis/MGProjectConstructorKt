@@ -7,8 +7,8 @@ android {
     defaultConfig {
         minSdkVersion 15
         targetSdkVersion 28
-        versionCode 16
-        versionName "0.1.6"
+        versionCode 17
+        versionName "0.1.7"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -31,13 +31,13 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:3.8.1'
     implementation 'com.squareup.okio:okio:1.13.0'
 
-    implementation"org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     implementation "org.jetbrains.anko:anko:$anko_version"
 
     implementation 'org.mgwater.mgbase:mg-extension-kt:0.0.2'
 
-    implementation 'org.mgwater.mgbase:mg-utils-kt:0.0.3'
+    implementation 'org.mgwater.mgbase:mg-utils-kt:0.1.1'
 
     implementation 'cn.bingoogolapple:bga-qrcode-zbar:1.2.1'
 
@@ -55,7 +55,7 @@ publish{
     userOrg = 'water'//bintray.com用戶名
     groupId = 'org.mgwater.mgbase'//jcenter上的路徑
     artifactId = 'mg-project-constructor-kt'//項目名稱
-    publishVersion = '0.1.6'//版本
+    publishVersion = '0.1.7'//版本
     desc = 'A Project Base Constructor.'//描述，不重要
     website = siteUrl//項目主頁
 }

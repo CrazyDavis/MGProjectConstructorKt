@@ -77,7 +77,7 @@ class MGPhotoPickerHelper {
                         activity = null
                         fragment = null
 
-                        MGImgLoadUtils.load(aty ?: fgt!!.context!!, data.data, attr.width, attr.height) { bmp ->
+                        MGImgLoadUtils.loadBitmap(aty ?: fgt!!.context!!, data.data, MGImgLoadUtils.ImageAttr(attr.width, attr.height)) { bmp ->
                             delegate?.pickerBmp(bmp)
                         }
                     }

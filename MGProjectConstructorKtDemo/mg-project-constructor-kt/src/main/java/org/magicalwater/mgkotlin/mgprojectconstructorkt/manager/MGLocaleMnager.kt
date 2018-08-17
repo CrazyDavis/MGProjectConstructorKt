@@ -24,7 +24,7 @@ class MGLocaleMnager {
     private lateinit var showLang: String
 
     //儲存相關設定的utils
-    private val settingUtil: MGSettingUtils = MGSettingUtils()
+    private val settingUtil: MGSettingUtils = MGSettingUtils.shared
 
     companion object {
         val shared: MGLocaleMnager = MGLocaleMnager()
@@ -32,6 +32,9 @@ class MGLocaleMnager {
 
     //開始真正的初始化
     fun initStart(context: Context) {
+        //也需要初始化 settingUtil
+        settingUtil.init(context)
+
         //先從文件讀取語言設定
         loadOpenLangFromFile(context)
 

@@ -32,5 +32,5 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation project(':mg-project-constructor-kt')
 
-    implementation 'org.mgwater.mgbase:mg-utils-kt:0.0.3'
+    implementation 'org.mgwater.mgbase:mg-utils-kt:0.1.1'
 }

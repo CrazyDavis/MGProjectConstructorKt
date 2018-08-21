@@ -148,8 +148,8 @@ class MGFgtManager: MGRequestConnect.MGRequestCallback {
 
         manager.inTransaction {
             setCustomAnimations(
-                    R.anim.anim_fgt_alpha_in, R.anim.anim_fgt_stay,
-                    R.anim.anim_fgt_alpha_in, R.anim.anim_fgt_stay
+                    R.anim.anim_fgt_alpha_in, R.anim.anim_fgt_alpha_out,
+                    R.anim.anim_fgt_alpha_in, R.anim.anim_fgt_alpha_out
             )
             hide(fgt)
         }

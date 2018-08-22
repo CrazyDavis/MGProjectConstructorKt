@@ -43,6 +43,16 @@ interface MGBaseFgtHelperFeature {
         mFgtHelper?.show(pageInfo)
     }
 
+    //顯示某個頁面, 直接帶入Any類型的class
+    //在這裡面自動判斷是否為 request 或者 pageInfo類型的跳轉
+    fun fgtShow(data: Any) {
+        when (data) {
+            is MGPageInfo -> fgtShow(data)
+            is MGUrlRequest -> fgtShow(data)
+            else -> println("跳轉頁面帶入資料必須是 MGPageInfo 或者 MGUrlRequest 類型")
+        }
+    }
+
     //隱藏某個頁面
     fun fgtHide(fgtTag: String) {
         mFgtHelper?.hide(fgtTag)

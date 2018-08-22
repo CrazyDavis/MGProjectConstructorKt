@@ -14,8 +14,9 @@
 7. 多國語系(MGLocalManager)  
 
 ## 版本  
+0.1.9 - 頁面跳轉呼叫的 fgtShow(param) 加入可帶入Any, 在內部判斷類型調用　　
 0.1.8 - 修改 MGFgtManager 呼叫回退時的出場動畫,　由靜止不動改為透明淡出　　
-0.1.7 - 修正因依賴 mg-utils-kt 的庫 更新後造成的圖片讀取失敗
+0.1.7 - 修正因依賴 mg-utils-kt 的庫 更新後造成的圖片讀取失敗　　
 0.1.6 - 修復app縮小太久導致頁面被銷毀重新進入 activity 的 onCreate 方法時, 重新設置fragmentManager造成的頁面初始化資訊錯誤  
 
 ## 添加依賴  

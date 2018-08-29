@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
 
 /**
  * Created by 志朋 on 2017/12/3.
- * 網路要求資料的class, 封裝網路要求的 class 是 MGAccountHttpClient
+ * 網路要求資料的class, 封裝網路要求的 class 是 MGOkHttpClient
  * 此類針對 Request Builder 進行封裝
  * 主要處理線程併發
  */
@@ -46,7 +46,7 @@ class MGRequestConnect {
                     val urlIndex = runSort[number]
                     println("執行 urlIndex = $urlIndex")
 
-                    distributionConnect(context, request, cbk, urlIndex)
+                    distributionConnect(context, request, urlIndex)
                 }
 
                 //執行完一個階段, 需要根據設置的連線類型檢查錯誤
@@ -105,23 +105,21 @@ class MGRequestConnect {
          */
         private fun checkExecuteStatus(request: MGUrlRequest, executeIndex: Array<Int>): Boolean {
             when (request.executeType) {
-            //全部執行完畢才返回, 所以不檢查錯誤
+                //全部執行完畢才返回, 所以不檢查錯誤
                 MGUrlRequest.MGExecuteType.ALL -> {
                     return true
                 }
 
-            //當某階段全部成功後即返回
+                //當某階段全部成功後即返回
                 MGUrlRequest.MGExecuteType.SUCCESS_BACK -> {
-
-                    //只要有一個沒有成功(code不為0)就直接跳出並且返回true代表需要繼續往下執行
+                    //只要有一個沒有成功就直接跳出並且返回true代表需要繼續往下執行
                     for (run in executeIndex) when (!request.response[run].isSuccess) {
                         true -> return true
                     }
-
                     return false
                 }
 
-            //當出現錯後即刻返回
+                //當出現錯後即刻返回
                 MGUrlRequest.MGExecuteType.DEFAULT -> {
                     for (run in executeIndex) when (!request.response[run].isSuccess) {
                         true -> return false
@@ -135,47 +133,57 @@ class MGRequestConnect {
 
         //開始處理request, 從本地快取撈資料, 或者使用 get, post取資料
         private fun distributionConnect(context: AnkoAsyncContext<MGRequestConnect.Companion>,
-                                        request: MGUrlRequest, cbk: MGRequestCallback, urlIndex: Int) {
-
+                                        request: MGUrlRequest, urlIndex: Int) {
             //接著判斷是否需要從本地撈取資料, 以及本地有無資料存在
             //資料庫快取部分尚未完成, 因此這部分直接略過
             if (request.content[urlIndex].locale.load) {
                 return
             }
-
-            startConnect(context, request, cbk, urlIndex)
+            startConnect(context, request, urlIndex)
         }
-
 
         //確定要從網路撈取資料了
         private fun startConnect(context: AnkoAsyncContext<MGRequestConnect.Companion>,
-                                 request: MGUrlRequest, cbk: MGRequestCallback, urlIndex: Int) {
-            MGLogUtils.d("開始連線: ${request.content[urlIndex]}")
-            val responseMG: MGAccountResponse? = MGAccountHttpClient.shared.execute(request.content[urlIndex])
-
-            //首先判斷 連線的狀態, 狀態成功, api才成功
-//            var isRequestSuccess = false
-
-//            if (responseMG != null) isRequestSuccess = responseParserHandler.isResponseStatsSuccess(responseMG)
-
-//            var codes = responseMG?.getHeadersByName("code")
-//            if (responseMG?.statusCode == 200 && codes != null && codes.size > 0) isRequestSuccess = true
+                                 request: MGUrlRequest, urlIndex: Int) {
+            val content = request.content[urlIndex]
+            MGLogUtils.d("開始連線: $content")
+            val responseMG: MGRequestResponse? = MGOkHttpClient.SHARED.execute(content)
 
             MGLogUtils.d("連線完畢: 狀態 - ${responseMG?.statusCode}, header - ${responseMG?.getHeaders()}")
 
-            val result: String? = responseMG?.getResponseAsString()
+            //接著依照是上傳檔案或者需要反序列化做不同處理
+            val saveInPath = content.contentHandler.saveInPath
+            if (saveInPath != null) {
+                //是上傳檔案
+                if (responseMG == null) {
+                    MGLogUtils.d("返回 下載失敗: $saveInPath")
+                } else {
+                    MGLogUtils.d("返回 下載成功: $saveInPath")
+                    request.response[urlIndex] =
+                            responseParserHandler.download(
+                                    context, responseMG,
+                                    saveInPath
+                            )
+                }
 
-            if (result == null || responseMG == null) {
-                //沒有得到返回字串, 印出 status code
-                MGLogUtils.d("返回 失敗: $result")
             } else {
-                MGLogUtils.d("返回 class - ${request.content[urlIndex].deserialize?.simpleName}: $result")
+                val result: String? = responseMG?.getResponseAsString()
 
-                //如果沒有設置 反序列化的 handler 的話, 一律發生錯誤
-                val response = responseParserHandler.parser(context, responseMG, result, request.content[urlIndex].deserialize)
-                request.response[urlIndex] = response
+                if (result == null || responseMG == null) {
+                    //沒有得到返回字串, 印出 status code
+                    MGLogUtils.d("返回 失敗: $result")
+                } else {
+                    val deserialize = content.contentHandler.deserialize
+                    MGLogUtils.d("返回 class - ${deserialize?.simpleName}: $result")
+
+                    //如果沒有設置 反序列化的 handler 的話, 一律發生錯誤
+                    request.response[urlIndex] =
+                            responseParserHandler.parser(
+                                    context, responseMG,
+                                    result, deserialize
+                            )
+                }
             }
-
         }
     }
 
@@ -187,14 +195,17 @@ class MGRequestConnect {
     interface MGResponseParser {
 
         //傳回的資料狀態是否為成功
-        fun isResponseStatsSuccess(responseMG: MGAccountResponse): Boolean
+        fun isResponseStatsSuccess(responseMG: MGRequestResponse): Boolean
 
         //如果有多筆request sort, 則每個step結束後都會呼叫此方法
         //前提是request帶有tag, step為當前執行到第幾個step結束
         fun multipleRequest(request: MGUrlRequest, tag: String, step: Int)
 
         //解析傳回的字串檔案
-        fun parser(context: AnkoAsyncContext<MGRequestConnect.Companion>, responseMG: MGAccountResponse?,
+        fun parser(context: AnkoAsyncContext<MGRequestConnect.Companion>, responseMG: MGRequestResponse?,
                    result: String, deserialize: KClass<out Any>?): MGUrlRequest.MGResponse
+
+        //下載檔案
+        fun download(context: AnkoAsyncContext<MGRequestConnect.Companion>, responseMG: MGRequestResponse?, inPath: String): MGUrlRequest.MGResponse
     }
 }

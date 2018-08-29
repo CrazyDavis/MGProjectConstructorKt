@@ -41,9 +41,9 @@ class MGUrlRequest private constructor(
     init {
 
         //如果沒有自訂順序, 則執行順序是串連
-        when (sort) {
-            null -> runSort = Array(content.size) { index -> arrayOf(index) }
-            else -> runSort = sort
+        runSort = when (sort) {
+            null -> Array(content.size) { index -> arrayOf(index) }
+            else -> sort
         }
 
         response = Array(content.size) { MGResponse() }

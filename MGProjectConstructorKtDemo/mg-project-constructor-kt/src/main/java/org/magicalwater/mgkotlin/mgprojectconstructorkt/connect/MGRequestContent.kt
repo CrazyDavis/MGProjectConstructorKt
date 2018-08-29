@@ -34,14 +34,14 @@ class MGRequestContent(
         for ((k,v) in paramSource) {
             when(v) {
                 is String -> {
-                    var pair = Pair(k,v)
+                    val pair = Pair(k,v)
                     l.add(pair)
                 }
 
                 else -> {
                     val map = v as MutableMap<String,String>
                     for ((num, innerV) in map) {
-                        var pair = Pair("$k[$num]", innerV)
+                        val pair = Pair("$k[$num]", innerV)
                         l.add(pair)
                     }
                 }
@@ -87,7 +87,7 @@ class MGRequestContent(
     //發起 request 時是否要快取
     var network: Boolean = true //網路的快取設定, 默認開啟
 
-    var deserialize: KClass<out Any>? = null //需要反序列化的 class
+    var contentHandler: MGContentHandler = MGContentHandler() //得到回傳後需要做的動作, 需要反序列化的 class 或者 下載到目的路徑
 
     //這邊處存內部已有的 param key, 對應到已經加入多少個, 方便取出時加入陣列字串
     private var paramSource: MutableMap<String, Any> = mutableMapOf()
@@ -95,9 +95,15 @@ class MGRequestContent(
     //同 paramSource, 差別在於此參數專給 paramSource
     private var uploadSource: MutableMap<String, Any> = mutableMapOf()
 
+    //設定下載到哪個地方(包含檔名)
+    fun setSaveInPath(path: String): MGRequestContent {
+        contentHandler.saveInPath = path
+        return this
+    }
 
-    fun setDeserialize(c: KClass<out Any>?): MGRequestContent {
-        deserialize = c
+    //設定反序列化成哪個class
+    fun setDeserialize(deserialize: KClass<out Any>): MGRequestContent {
+        contentHandler.deserialize = deserialize
         return this
     }
 
@@ -159,6 +165,21 @@ class MGRequestContent(
     //Requst Method
     enum class Method {
         GET, POST
+    }
+
+    //得到文件後是 下載/反序列化
+    class MGContentHandler {
+        var saveInPath: String? = null //包含檔名
+        var deserialize: KClass<out Any>? = null
+
+        constructor()
+
+        constructor(saveInPath: String) {
+            this.saveInPath = saveInPath
+        }
+        constructor(deserialize: KClass<out Any>?) {
+            this.deserialize = deserialize
+        }
     }
 
     //本地的快取設定

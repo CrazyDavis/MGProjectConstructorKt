@@ -1,16 +1,14 @@
 package org.magicalwater.mgkotlin.mgprojectconstructorkt.connect
 
 import android.graphics.Bitmap
-import android.util.Log
 import okhttp3.*
 import okhttp3.internal.tls.OkHostnameVerifier
-import java.io.IOException
+import java.io.*
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSession
-import java.io.ByteArrayOutputStream
 
 
 /**
@@ -20,7 +18,7 @@ import java.io.ByteArrayOutputStream
  *
  * 此類 與 AccountRespnse 一套
  */
-class MGAccountHttpClient private constructor() {
+class MGOkHttpClient private constructor() {
 
     private val mOkHttpCilent: OkHttpClient
 
@@ -28,12 +26,10 @@ class MGAccountHttpClient private constructor() {
         private var CONNECTION_TIME_OUT = 30 * 1000
         private var READ_TIME_OUT = 30 * 1000
         private var WRITE_TIME_OUT = 30 * 1000
-        val shared: MGAccountHttpClient by lazy { MGAccountHttpClient() }
+        val SHARED: MGOkHttpClient by lazy { MGOkHttpClient() }
     }
 
     /**
-     * 由於primary constructor不能包含任何code
-     * 因此在此初始化, 目的:
      * 1. 在此初始化相關參數
      * 2. 保持 cookie
     */
@@ -65,13 +61,22 @@ class MGAccountHttpClient private constructor() {
     /**
      * 執行請求, 依照 MGRequestContent 進行的封裝
      */
-    fun execute(content: MGRequestContent): MGAccountResponse? {
-        var result: MGAccountResponse? = null
+    fun execute(content: MGRequestContent): MGRequestResponse? {
+        var result: MGRequestResponse? = null
         try {
             var okRequest = MGOKRequest(content)
             val okResponse = performRequest(okRequest) //進行參數封裝, 發起網路請求
             if (okResponse != null) {
-                result = MGAccountResponse(okResponse.responseCode, okResponse.body, okResponse.headers)
+                //依照需求, 假如是下載檔案的話, 就將 inputStream 直接寫入下載位置
+                when {
+                    content.contentHandler.saveInPath != null -> {
+                        outputData(okResponse.getBodyAsInputStream(), content.contentHandler.saveInPath!!)
+                        result = MGRequestResponse(okResponse.responseCode, okResponse.headers)
+                    }
+                    content.contentHandler.deserialize != null -> {
+                        result = MGRequestResponse(okResponse.responseCode, okResponse.getBodyAsByteArray(), okResponse.headers)
+                    }
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -79,8 +84,29 @@ class MGAccountHttpClient private constructor() {
         return result
     }
 
-    private inner class MGOKRequest(content: MGRequestContent) {
-        private var content: MGRequestContent = content
+    //從inputstream輸出資料到目的儲存
+    private fun outputData(inputStream: InputStream?, target: String) {
+        if (inputStream != null) {
+            val outputStream = FileOutputStream(target)
+            val byteBuffer = ByteArray(1024)
+            var bytesRead: Int = inputStream.read(byteBuffer)
+            while (bytesRead != -1) {
+                outputStream.write(byteBuffer, 0, bytesRead)
+                bytesRead = inputStream.read(byteBuffer)
+            }
+            inputStream.close()
+            outputStream.flush()
+            outputStream.close()
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun performRequest(request: MGOKRequest): OKResponse? {
+        val call = mOkHttpCilent.newCall(request.getDataRequest())
+        return OKResponse(call.execute())
+    }
+
+    private inner class MGOKRequest(private var content: MGRequestContent) {
 
         fun getDataRequest(): Request {
             val request: Request
@@ -96,14 +122,14 @@ class MGAccountHttpClient private constructor() {
             }
 
             //創建 url builder 設定相關參數
-            var httpBuilder = HttpUrl.Builder()
+            val httpBuilder = HttpUrl.Builder()
                     .scheme(content.scheme)
                     .host(content.host)
                     .encodedPath(content.path)
 
-            when (content.method) {
-                MGRequestContent.Method.GET -> request = buildGetRequest(requestBuilder, httpBuilder)
-                MGRequestContent.Method.POST -> request = buildPostRequest(requestBuilder, httpBuilder)
+            request = when (content.method) {
+                MGRequestContent.Method.GET -> buildGetRequest(requestBuilder, httpBuilder)
+                MGRequestContent.Method.POST -> buildPostRequest(requestBuilder, httpBuilder)
             }
 
             return request
@@ -160,16 +186,24 @@ class MGAccountHttpClient private constructor() {
                         bodyBuilder.addFormDataPart(uploadName, "file", requestBody!!)
                 }
 
-                requestBuilder.header("Content-Type", "multipart/form-data")
-            }
-
-            //加入post參數
-            content.params?.let {
-                val formBuilder = FormBody.Builder()
-                for (param in it) {
-                    formBuilder.add(param.first, param.second)
+                //加入參數
+                content.params?.let {
+                    for (param in it) {
+                        bodyBuilder.addFormDataPart(param.first, param.second)
+                    }
+                    requestBuilder.post(bodyBuilder.build())
                 }
-                requestBuilder.post(formBuilder.build())
+
+                requestBuilder.header("Content-Type", "multipart/form-data")
+            } else {
+                //加入post參數
+                content.params?.let {
+                    val formBuilder = FormBody.Builder()
+                    for (param in it) {
+                        formBuilder.add(param.first, param.second)
+                    }
+                    requestBuilder.post(formBuilder.build())
+                }
             }
 
             return requestBuilder.build()
@@ -181,20 +215,13 @@ class MGAccountHttpClient private constructor() {
      */
     private inner class OKResponse(private val response: Response?) {
         val responseCode: Int
-            get() = response!!.code()
-        val body: ByteArray?
-            get() {
-                var result: ByteArray? = null
-                if (response?.body() != null) {
-                    try {
-                        result = response.body()!!.bytes()
-                    } catch (e: IOException) {
-                        println("api request出錯, 訊息 = ${e.message}")
-                    }
-                    headers
-                }
-                return result
-            }
+            get() = response?.code() ?: -1
+        private var body: ResponseBody? = response?.body()
+
+        //bodyByteArray呼叫了之後就會直接關閉 InputStream
+        //在這邊直接把body設置為null表示不可再取
+        private var bodyByteArray: ByteArray? = null
+
         val headers: MutableMap<String, MutableList<String>>?
             get() {
                 var headers: MutableMap<String, MutableList<String>>? = null
@@ -205,12 +232,37 @@ class MGAccountHttpClient private constructor() {
                 }
                 return headers
             }
-    }
 
-    @Throws(IOException::class)
-    private fun performRequest(request: MGOKRequest): OKResponse? {
-        val call = mOkHttpCilent.newCall(request.getDataRequest())
-        return OKResponse(call.execute())
+        fun getBodyAsByteArray(): ByteArray? {
+            if (bodyByteArray != null) {
+                return bodyByteArray
+            }
+            var result: ByteArray? = null
+            if (body != null) {
+                try {
+                    result = body!!.bytes()
+                } catch (e: IOException) {
+                    println("api request出錯, 訊息 = ${e.message}")
+                }
+                body = null
+            }
+            return result
+        }
+
+        //此方法只能呼叫一次, 之後都回傳null
+        //拿一次之後如果不當下操作完畢必須外部自行尋找位置存放
+        fun getBodyAsInputStream(): InputStream? {
+            var inputStream: InputStream? = null
+            if (body != null) {
+                try {
+                    inputStream = body!!.byteStream()
+                } catch (e: IOException) {
+                    println("api request出錯, 訊息 = ${e.message}")
+                }
+                body = null
+            }
+            return inputStream
+        }
     }
 
     /**
@@ -224,9 +276,7 @@ class MGAccountHttpClient private constructor() {
                 if (certs.isNotEmpty()) {
                     for (i in certs.indices) { //取出所有證書進行驗證
                         result = OkHostnameVerifier.INSTANCE.verify(hostname, certs[i])
-                        if (result) {
-                            break
-                        }
+                        if (result) break
                     }
                 } else {
                     result = true
